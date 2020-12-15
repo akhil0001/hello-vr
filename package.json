@@ -5,15 +5,21 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "parcel src/index.html"
+    "start": "parcel src/index.html",
+    "clean-all": "rimraf **/dist **/.cache"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "parcel": "^1.12.4"
+    "parcel": "^1.12.4",
+    "rimraf": "^3.0.2"
   },
   "dependencies": {
     "three": "^0.123.0"
-  }
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "private": "true"
 }
