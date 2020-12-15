@@ -1,7 +1,6 @@
 const THREE = require('three');
 
-function getControllers(renderer) {
-    console.log(renderer);
+function getControllers(renderer,onSelectStart,onSelectEnd) {
     const controllerOne = renderer.xr.getController(0);
    
     controllerOne.addEventListener('connected',function(event){
@@ -11,6 +10,10 @@ function getControllers(renderer) {
     controllerOne.addEventListener('disconnected',function() {
         this.remove(this.children[0]);
     });
+
+    controllerOne.addEventListener('selectstart',onSelectStart);
+
+    controllerOne.addEventListener('selectend',onSelectEnd);
 
     return controllerOne;
 
