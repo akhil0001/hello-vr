@@ -1,0 +1,11 @@
+{
+  "name": "003-gamepad",
+  "version": "1.0.0",
+  "description": "This is to learn and test gamepad api controller functionality of webXR using threejs",
+  "main": "src/js/index.js",
+  "author": "Akhil Sai Ram Chennareddy",
+  "license": "MIT",
+  "scripts": {
+    "start": "parcel src/index.html --hmr-port=59119"
+  }
+}
