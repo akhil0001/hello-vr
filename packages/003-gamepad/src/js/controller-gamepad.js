@@ -1,120 +1,116 @@
 import {
-    isEmpty,
-    isEqual,
-    isNil,
-    isNull,
-    remove,
-    get,
     forEach,
+    get,
+    isEmpty,
+    isNil,
+    remove,
+    isEqual
 } from 'lodash';
 
-const EventEnum = {
-    up: 'up',
-    down: 'down',
-    touchStart: 'touchStart',
-    touchEnd: 'touchEnd'
-};
+const hasChangedToFalse = (prev, next) => prev === true && next === false;
+const hasChangedToTrue = (prev, next) => prev === false && next === true;
 
-
-const ButtonEnum = {
-    TRIGGER: 0,
-    SQUEEEZE: 1,
-    TOUCHPAD: 2,
-    THUMBSTICK: 3,
-    XORA: 4,
-    BORY: 5
-};
-
-const ButtonDataEnum = {
-    PRESSED: 'pressed',
-    TOUCHED: 'touched',
-    VALUE: 'value'
-}
-
-
-const ButtonMapping = {
+const BUTTON_MAPPING = {
     TRIGGER: 'trigger',
     SQUEEZE: 'squeeze',
     TOUCHPAD: 'touchpad',
     THUMBSTICK: 'thumbstick',
     XORA: 'xora',
     BORY: 'bory'
+};
+
+const BUTTON_ENUM = {
+    TRIGGER: 0,
+    SQUEEZE: 1,
+    TOUCHPAD: 2,
+    THUMBSTICK: 3,
+    XORA: 4,
+    BORY: 5
+};
+
+const AXES_ENUM = {
+    TOUCHPAD_X:0,
+    TOUCHPAD_Y:1,
+    THUMBSTICK_X:2,
+    THUMBSTICK_Y:3
 }
 
-function getInitialButtonValues() {
-    return {
-        pressed: false,
-        touched: false,
-        value: 0
-    };
+const GAMEPAD_EVENTS = {
+    TOUCHED: 'touched',
+    PRESSED: 'pressed'
 }
 
-export default function GamepadControls(event, controller) {
-    const gamepad = get(event, 'data.gamepad', null);
+const EVENT_ENUM = {
+    up: 'up',
+    down: 'down',
+    touchStart: 'touchStart',
+    touchEnd: 'touchEnd'
+};
+
+export function GamepadControls(event, controller) {
+    const _gamepad = get(event, 'data.gamepad', null);
+    console.log(_gamepad.hapticActuators);
+    window.h = _gamepad.hapticActuators;
     const _controller = controller;
     let buttons = {};
-    window.gp = gamepad;
+    console.log(_gamepad.axes);
+    let _axes = [];
 
     function _init() {
-        forEach(ButtonMapping, (btnName) => {
-            const btn = controllerButton(btnName,_controller)
-            controller[btnName] = btn;
+        forEach(BUTTON_MAPPING, btnName => {
+            const btn = GamepadControlButton(btnName, _controller);
             buttons[btnName] = btn;
         });
-        controller.gamepadUpdate = update;
+        _axes = GamepadControlAxes('touchpad',controller);
     }
-    _init();
 
     function _loop() {
-        if (isNil(gamepad)) {
+        if (isNil(_gamepad)) {
             return;
         }
-        controller[ButtonMapping.TRIGGER].update(gamepad.buttons[ButtonEnum.TRIGGER]);
-        controller[ButtonMapping.SQUEEZE].update(gamepad.buttons[ButtonEnum.SQUEEEZE]);
-        controller[ButtonMapping.TOUCHPAD].update(gamepad.buttons[ButtonEnum.TOUCHPAD]);
-        controller[ButtonMapping.THUMBSTICK].update(gamepad.buttons[ButtonEnum.THUMBSTICK]);
-        controller[ButtonMapping.XORA].update(gamepad.buttons[ButtonEnum.XORA]);
-        controller[ButtonMapping.BORY].update(gamepad.buttons[ButtonEnum.BORY]);
+        buttons[BUTTON_MAPPING.TRIGGER].update(_gamepad.buttons[BUTTON_ENUM.TRIGGER]);
+        buttons[BUTTON_MAPPING.SQUEEZE].update(_gamepad.buttons[BUTTON_ENUM.SQUEEZE]);
+        buttons[BUTTON_MAPPING.TOUCHPAD].update(_gamepad.buttons[BUTTON_ENUM.TOUCHPAD]);
+        buttons[BUTTON_MAPPING.THUMBSTICK].update(_gamepad.buttons[BUTTON_ENUM.THUMBSTICK]);
+        buttons[BUTTON_MAPPING.XORA].update(_gamepad.buttons[BUTTON_ENUM.XORA]);
+        buttons[BUTTON_MAPPING.BORY].update(_gamepad.buttons[BUTTON_ENUM.BORY]);
+        // update axes change
+        _axes.update(_gamepad.axes);
     }
 
     function update() {
         _loop();
     }
+
+    _init();
     return {
         update,
         ...buttons
-    };
+    }
 }
 
-function controllerButton(name,_controller) {
+function GamepadControlButton(name, controller) {
     let _btnCache = {
         pressed: false,
         touched: false,
         value: 0
     };
-    let _listeners = null;
+    let _listeners = {};
     const btnName = name;
 
     function _loop(btn) {
-        if (isNil(_listeners) || isNil(btn)) {
+        if (isEmpty(_listeners) || isNil(btn)) {
             return;
         }
         _checkForChanges(btn);
     }
 
     function _checkForChanges(btn) {
-        if (hasEventListeners(EventEnum.touchStart)) {
-            _checkForEventChange(btn, 'touched', (a, b) => (a === true && b === false), EventEnum.touchStart);
-        }
-        if (hasEventListeners(EventEnum.down)) {
-            _checkForEventChange(btn, 'pressed', (a, b) => (a === true && b === false), EventEnum.down);
-        }
-        if (hasEventListeners(EventEnum.up)) {
-            _checkForEventChange(btn, 'pressed', (a, b) => (a === false && b === true), EventEnum.up);
-        }
-        if (hasEventListeners(EventEnum.touchEnd)) {
-            _checkForEventChange(btn, 'touched', (a, b) => (a === false && b === true), EventEnum.touchEnd);
-        }
+        _checkForEventChange(btn, GAMEPAD_EVENTS.TOUCHED, hasChangedToFalse, EVENT_ENUM.touchStart);
+        _checkForEventChange(btn, GAMEPAD_EVENTS.PRESSED, hasChangedToFalse, EVENT_ENUM.down);
+        _checkForEventChange(btn, GAMEPAD_EVENTS.PRESSED, hasChangedToTrue, EVENT_ENUM.up);
+        _checkForEventChange(btn, GAMEPAD_EVENTS.TOUCHED, hasChangedToTrue, EVENT_ENUM.touchEnd);
+
         _btnCache = _copyButtonInfo(_btnCache, btn);
     }
 
@@ -123,7 +119,7 @@ function controllerButton(name,_controller) {
         const cached = get(_btnCache, key, false);
         const data = {
             btnData,
-            position: _controller.position
+            position: controller.position
         };
         if (condition(current, cached)) {
             _dispatchEvent({
@@ -137,8 +133,9 @@ function controllerButton(name,_controller) {
         let newTarget = {
             ...target
         };
-        newTarget['pressed'] = source['pressed'];
-        newTarget['touched'] = source['touched'];
+        newTarget[GAMEPAD_EVENTS.PRESSED] = source[GAMEPAD_EVENTS.PRESSED];
+        newTarget[GAMEPAD_EVENTS.TOUCHED] = source[GAMEPAD_EVENTS.TOUCHED];
+        newTarget['value'] = source['value'];
         return newTarget;
     }
 
@@ -146,46 +143,24 @@ function controllerButton(name,_controller) {
         type,
         message
     }) {
-        if (isNil(_listeners)) {
-            return;
-        }
-        const listenerArr = get(_listeners, type, []);
-        if (isEmpty(listenerArr)) {
-            return;
-        }
-        const target = this;
-        const arr = [...listenerArr];
-        arr.forEach((listener) => listener.call(this, {
+        const listenerArr = get(_listeners, type, []);  
+        listenerArr.forEach((listener) => listener.call(this, {
             type,
             message,
-            target
         }));
     }
 
-    function hasEventListeners(eventType) {
-        const eventListeners = get(_listeners, eventType, []);
-        return eventListeners.length !== 0;
-    }
 
-    function addEventListener(type, listener) {
-        if (isNull(_listeners)) {
-            _listeners = {};
-        }
-        if (isNil(_listeners[type])) {
-            _listeners[type] = [];
-        }
-        _listeners[type].push(listener);
+    function addEventListener(eventType, listener) {
+        const listenersArr = get(_listeners, eventType, []);
+        listenersArr.push(listener);
+        _listeners[eventType] = listenersArr;
     }
 
     function removeEventListener(eventType, listener) {
-        if (isNil(_listeners)) {
-            return;
-        }
-        const listenersArr = _listeners[eventType];
-
-        if (!isNil(listenersArr)) {
-            remove(listenersArr, (_listener) => isEqual(listener, _listener));
-        }
+        const listenersArr = get(_listeners, eventType, []);
+        remove(listenersArr, (_listener) => isEqual(listener, _listener));
+        listenersArr[eventType] = listenersArr;
     }
 
     function update(btn) {
@@ -197,5 +172,52 @@ function controllerButton(name,_controller) {
         update,
         addEventListener,
         removeEventListener
+    }
+}
+
+function GamepadControlAxes(name,controller){
+    const _name = name;
+    let _listeners = [];
+    let _axesCache = [0,0,0,-0];
+    const _epsilon = 0.5;
+
+    function _loop(axes){
+
+        if(isEmpty(axes)){
+            return;
+        }
+        _checkForChanges(axes);
+    }
+
+    function _checkForChanges(axes){
+        _checkForAxesChanges(axes);
+    }
+
+    function _checkForAxesChanges(axes){
+        if(Math.abs(_axesCache[0]-axes[0]) > _epsilon || Math.abs(_axesCache[1]-axes[1]) > _epsilon){
+            console.log('axes changed more than epsilon');
+            console.log({_axesCache,axes});
+        }
+        if(Math.abs(_axesCache[2]-axes[2]) > _epsilon || Math.abs(_axesCache[3]-axes[3]) > _epsilon){
+            console.log('axes changed more than epsilon');
+            console.log({_axesCache,axes});
+        }
+        _axesCache = _copyAxesInfo(_axesCache,axes);
+    }
+
+    function _copyAxesInfo(target,source){
+        let newTarget = {...target};
+        newTarget[0] = source[0];
+        newTarget[1] = source[1];
+        newTarget[2] = source[2];
+        newTarget[3] = source[3];
+        return newTarget;
+    }
+    
+    function update(axes){
+        _loop(axes);
+    }
+    return {
+        update
     }
 }

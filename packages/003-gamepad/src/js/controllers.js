@@ -1,13 +1,15 @@
-const THREE= require('three');
-import GamepadControls from './controller-gamepad';
+const THREE = require('three');
+import {
+    GamepadControls
+} from './controller-gamepad';
 
 function getControllers(renderer, onSelectStart, onSelectEnd) {
     let controllerOne = renderer.xr.getController(0);
     let controllerButtons = null;
+    const temp = new THREE.Matrix4();
     controllerOne.addEventListener('connected', function (event) {
         this.add(buildController(event.data));
-        window.ef = event;
-         controllerOne = GamepadControls(event,controllerOne);
+        controllerOne.gp = GamepadControls(event, controllerOne);
         // controllerOne.addEventListener('axesChange',(e) => console.log(e.message));
         // controllerOne.addEventListener('axesChange',(e) => console.log('hryyy',e.message));
         // controllerOne.addEventListener('triggerDown',(e)=> console.log('t=down'));
@@ -15,14 +17,20 @@ function getControllers(renderer, onSelectStart, onSelectEnd) {
         // controllerOne.addEventListener('squeezeUp',(e)=> console.log('s=up'));
         // controllerOne.addEventListener('squeezeDown',(e)=> console.log('s=down'));
         // controllerOne.addEventListener('squeezeDown',(e)=> console.log('s-down'));
-        controllerOne.trigger.addEventListener('up',(e) =>console.log('trigger-up'));
-        controllerOne.squeeze.addEventListener('up',(e) =>console.log('squeeze-up'));
-        controllerOne.xora.addEventListener('up',(e) =>console.log('xora-up'));
-        controllerOne.trigger.addEventListener('up',(e) =>console.log(e.type));
-        controllerOne.trigger.addEventListener('touchStart',(e) => console.log(e.type))
-        controllerOne.trigger.addEventListener('down',(e) => console.log(e.type));
-        controllerOne.trigger.addEventListener('touchEnd',(e) => console.log(e));
-        
+        function logger(e){
+            console.log('trigger-up')
+        }
+        // controllerOne.gp.trigger.addEventListener('up', logger);
+        // controllerOne.gp.squeeze.addEventListener('up', (e) => console.log('squeeze-up'));
+        // controllerOne.gp.xora.addEventListener('up', (e) => controllerOne.gp.trigger.removeEventListener('up', logger));
+        // controllerOne.gp.trigger.addEventListener('up', (e) => console.log(e.type));
+        // controllerOne.gp.trigger.addEventListener('touchStart', (e) => console.log(e.type))
+        controllerOne.gp.trigger.addEventListener('down', (e) => {
+            temp.identity().extractRotation(controllerOne.matrixWorld);
+            onSelectStart(controllerOne);
+        });
+        // controllerOne.gp.trigger.addEventListener('touchEnd', (e) => console.log(e));
+
     });
 
     controllerOne.addEventListener('disconnected', function () {

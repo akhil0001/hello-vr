@@ -14,7 +14,7 @@ let scene = null,
     objects= [],
     positionX = 0,
     positionY = 0;
-
+let tempo = null,cube = null;
     const clock = new THREE.Clock();
 function init() {
     const canvasContainer = document.getElementById('canvas-container');
@@ -44,6 +44,11 @@ window.renderer = renderer;
 
     scene.add(controller);
     scene.add(controllerGrip);
+    const cubeGeom = new THREE.SphereBufferGeometry(Math.random()*0.32,Math.random()*32,Math.random()*0.32);
+    const cubeMaterial = new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } );
+     cube = new THREE.Mesh(cubeGeom,cubeMaterial);
+    
+    room.add(cube);
     document.body.appendChild(VRButton.createButton(renderer))
 
     animate();
@@ -63,22 +68,14 @@ function createRoom() {
 
 function render() {
     const delta = clock.getDelta()*60*1000;
-    if (controller.userData.isSelecting) {
-        const cubeGeom = new THREE.SphereBufferGeometry(Math.random()*0.32,Math.random()*32,Math.random()*0.32);
-        const cubeMaterial = new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } );
-        const cube = new THREE.Mesh(cubeGeom,cubeMaterial);
-        cube.position.copy(controller.position);
-        
-        objects.push(cube);
-        room.add(cube);
+    
+    cube.position.copy(controller.position);
+    cube.rotation.copy(controller.rotation);
+    
+    if(controller.gp){
+        controller.gp.update();
     }
-    if(controller.gamepadUpdate){
-        controller.gamepadUpdate();
-    }
-    objects.forEach(obj => {
-        obj.position.x +=positionX;
-        obj.position.y +=positionY;
-    })
+   
     renderer.render(scene, camera);
 }
 
@@ -95,7 +92,7 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-function onControllerSelectStart() {
+function onControllerSelectStart(temp) {
     this.userData.isSelecting = true;
 }
 
