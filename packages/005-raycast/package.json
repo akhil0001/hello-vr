@@ -1,0 +1,9 @@
+{
+  "name": "005-raycast",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts":{
+    "start": "parcel src/index.html --hmr-port=59119"
+  }
+}

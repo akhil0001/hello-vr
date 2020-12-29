@@ -1,7 +1,7 @@
+const THREE = require('three');
 import {
     random
 } from 'lodash';
-const THREE = require('three');
 
 
 export function addRandomCubes(scene, numberOfCubes = 1000) {

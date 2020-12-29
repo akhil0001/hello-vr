@@ -1,7 +1,17 @@
 import getWindowSize from './window';
 import getControllers from './controllers';
+import {
+    getCanvasContainer
+} from './canvas-container';
+import {
+    initRenderer
+} from './renderer';
+import {addRandomCubes} from './cubes';
 
-export  {
+export {
     getWindowSize,
-    getControllers
+    getControllers,
+    getCanvasContainer,
+    initRenderer,
+    addRandomCubes
 };

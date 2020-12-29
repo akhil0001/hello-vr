@@ -30,7 +30,7 @@ function buildController(data){
             geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( [ 0, 0, 0, 0, 0, - 1 ], 3 ) ); //wutt
             geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( [ 0.5, 0.5, 5, 0, 0, 0 ], 3 ) );
 
-            material = new THREE.LineBasicMaterial( { vertexColors: true, blending: THREE.AdditiveBlending,color:0x090000 } );
+            material = new THREE.LineBasicMaterial( { vertexColors: true, blending: THREE.AdditiveBlending,color:0xffffff } );
 
             return new THREE.Line( geometry, material );
 
